@@ -1,18 +1,36 @@
 <script lang="ts">
-    import { onMount } from 'svelte';
+    import { onMount, onDestroy } from 'svelte';
 
-    let { command, typing = false, delayStart = 0 } = $props();
+    // pasteUrl: the URL to paste first
+    // commandPrefix: what to type before the URL (e.g. 'npx sv create --from-playground="')
+    // commandSuffix: what to type after the URL (e.g. '"')
+    let {
+        command = '',
+        typing = false,
+        delayStart = 0,
+        pasteMode = false,
+        pasteDelay = 0,
+        pasteUrl = '',
+        commandPrefix = '',
+        commandSuffix = '',
+    } = $props();
 
     let displayedCommand = $state('');
-    let containerEl: HTMLDivElement;
-    let typingTimeout: ReturnType<typeof setTimeout> | null = null;
+    let showPasteToast = $state(false);
+    let containerEl: HTMLDivElement | undefined;
+    let typingTimeout: ReturnType<typeof setTimeout> | undefined;
+    let observer: IntersectionObserver | undefined;
+    let isVisible = false;
+
+    // Derived - check if we're in paste-then-type mode
+    let isPasteTypingMode = $derived(Boolean(pasteUrl && commandPrefix));
 
     function startTyping() {
         displayedCommand = '';
         let i = 0;
 
         function typeChar() {
-            if (i < command.length) {
+            if (i < command.length && isVisible) {
                 displayedCommand = command.slice(0, i + 1);
                 i++;
                 typingTimeout = setTimeout(typeChar, 80 + Math.random() * 60);
@@ -21,45 +39,113 @@
         typingTimeout = setTimeout(typeChar, 100);
     }
 
+    function doPasteAndType() {
+        // Step 1: Show pasted URL with toast
+        showPasteToast = true;
+        displayedCommand = pasteUrl;
+
+        // Step 2: Hide toast after 800ms
+        typingTimeout = setTimeout(() => {
+            showPasteToast = false;
+
+            // Step 3: Start typing prefix before the URL
+            let prefixI = 0;
+            function typePrefixChar() {
+                if (prefixI < commandPrefix.length && isVisible) {
+                    displayedCommand =
+                        commandPrefix.slice(0, prefixI + 1) + pasteUrl;
+                    prefixI++;
+                    typingTimeout = setTimeout(
+                        typePrefixChar,
+                        80 + Math.random() * 60
+                    );
+                } else if (commandSuffix) {
+                    // Step 4: Type suffix after the URL
+                    let suffixI = 0;
+                    function typeSuffixChar() {
+                        if (suffixI < commandSuffix.length && isVisible) {
+                            displayedCommand =
+                                commandPrefix +
+                                pasteUrl +
+                                commandSuffix.slice(0, suffixI + 1);
+                            suffixI++;
+                            typingTimeout = setTimeout(
+                                typeSuffixChar,
+                                80 + Math.random() * 60
+                            );
+                        }
+                    }
+                    typingTimeout = setTimeout(typeSuffixChar, 100);
+                }
+            }
+            typingTimeout = setTimeout(typePrefixChar, 300);
+        }, 800);
+    }
+
+    function doPaste() {
+        showPasteToast = true;
+        displayedCommand = command;
+        typingTimeout = setTimeout(() => {
+            showPasteToast = false;
+        }, 800);
+    }
+
     function stopTyping() {
         if (typingTimeout) {
             clearTimeout(typingTimeout);
-            typingTimeout = null;
+            typingTimeout = undefined;
         }
         displayedCommand = '';
+        showPasteToast = false;
+    }
+
+    function handleVisibility(visible: boolean) {
+        if (visible && !isVisible) {
+            isVisible = true;
+            stopTyping();
+            if (pasteUrl && commandPrefix) {
+                typingTimeout = setTimeout(doPasteAndType, pasteDelay);
+            } else if (pasteMode) {
+                typingTimeout = setTimeout(doPaste, pasteDelay);
+            } else if (typing) {
+                typingTimeout = setTimeout(startTyping, delayStart);
+            }
+        } else if (!visible && isVisible) {
+            isVisible = false;
+            stopTyping();
+        }
     }
 
     onMount(() => {
-        if (!typing) {
+        const hasPasteTyping = pasteUrl && commandPrefix;
+
+        if (!typing && !pasteMode && !hasPasteTyping) {
             displayedCommand = command;
             return;
         }
 
-        // Use IntersectionObserver to detect when slide is visible
-        const observer = new IntersectionObserver(
+        observer = new IntersectionObserver(
             (entries) => {
-                entries.forEach((entry) => {
-                    if (
-                        entry.isIntersecting &&
-                        entry.intersectionRatio >= 0.5
-                    ) {
-                        // Stop any existing typing and restart
-                        stopTyping();
-                        typingTimeout = setTimeout(startTyping, delayStart);
-                    } else {
-                        stopTyping();
-                    }
-                });
+                const entry = entries[0];
+                if (entry) {
+                    handleVisibility(
+                        entry.isIntersecting && entry.intersectionRatio >= 0.5
+                    );
+                }
             },
             { threshold: [0, 0.5, 1] }
         );
 
-        observer.observe(containerEl);
+        if (containerEl) {
+            observer.observe(containerEl);
+        }
+    });
 
-        return () => {
+    onDestroy(() => {
+        if (observer) {
             observer.disconnect();
-            stopTyping();
-        };
+        }
+        stopTyping();
     });
 </script>
 
@@ -74,10 +160,17 @@
     <div class="terminal-body">
         <div class="line">
             <span class="prompt">$</span>
-            <span class="command">{typing ? displayedCommand : command}</span>
+            <span class="command"
+                >{typing || pasteMode || isPasteTypingMode
+                    ? displayedCommand
+                    : command}</span
+            >
             <span class="cursor"></span>
         </div>
     </div>
+    {#if showPasteToast}
+        <div class="paste-toast">📋 Pasted!</div>
+    {/if}
 </div>
 
 <style>
@@ -125,7 +218,7 @@
 
     .terminal-body {
         padding: 1rem;
-        min-height: 50px;
+        min-height: 70px;
     }
 
     .line {
@@ -164,6 +257,36 @@
         51%,
         100% {
             opacity: 0;
+        }
+    }
+
+    .terminal {
+        position: relative;
+    }
+
+    .paste-toast {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: #238636;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        z-index: 100;
+        animation: fadeInPaste 0.2s ease;
+    }
+
+    @keyframes fadeInPaste {
+        from {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.8);
+        }
+        to {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
         }
     }
 </style>

@@ -120,8 +120,12 @@
             </div>
             <div class="line"><span class="tag">&lt;/script&gt;</span></div>
             <div class="line">
-                <span class="tag">&lt;button&gt;</span>Clicks: {'{'}count{'}'}<span
-                    class="tag">&lt;/button&gt;</span
+                <span class="tag">&lt;button&gt;</span><span class="text"
+                    >Clicks:
+                </span><span class="brace">{'{'}</span><span class="variable"
+                    >count</span
+                ><span class="brace">{'}'}</span><span class="tag"
+                    >&lt;/button&gt;</span
                 >
             </div>
         </div>
@@ -309,10 +313,12 @@
         border: 1px solid #30363d;
         border-radius: 4px;
         margin-bottom: 0.3rem;
+        text-align: left;
     }
 
     .line {
         white-space: nowrap;
+        text-align: left;
     }
     .tag {
         color: #7ee787;
@@ -328,6 +334,12 @@
     }
     .number {
         color: #79c0ff;
+    }
+    .text {
+        color: #e6edf3;
+    }
+    .brace {
+        color: #ffa657;
     }
 
     .result-section {

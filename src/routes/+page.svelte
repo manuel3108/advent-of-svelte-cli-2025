@@ -92,9 +92,10 @@
                     </h2>
                     <PlaygroundScreenshot />
                     <Terminal
-                        command={'npx sv create --from-playground="svelte.dev/playground/abc123def"'}
-                        typing={true}
-                        delayStart={2500}
+                        pasteUrl="svelte.dev/playground/abc123def"
+                        commandPrefix="npx sv create --from-playground=""
+                        commandSuffix="""
+                        pasteDelay={2200}
                     />
                 </div>
             </Slide>
