@@ -17,13 +17,25 @@
 
     let displayedCommand = $state('');
     let showPasteToast = $state(false);
-    let containerEl: HTMLDivElement | undefined;
-    let typingTimeout: ReturnType<typeof setTimeout> | undefined;
-    let observer: IntersectionObserver | undefined;
+    let containerEl: HTMLDivElement | null = null;
+    let timeouts: ReturnType<typeof setTimeout>[] = [];
+    let observer: IntersectionObserver | null = null;
     let isVisible = false;
+    let hasStarted = false;
 
     // Derived - check if we're in paste-then-type mode
-    let isPasteTypingMode = $derived(Boolean(pasteUrl && commandPrefix));
+    const isPasteTypingMode = Boolean(pasteUrl && commandPrefix);
+
+    function addTimeout(fn: () => void, delay: number) {
+        const t = setTimeout(fn, delay);
+        timeouts.push(t);
+        return t;
+    }
+
+    function clearAllTimeouts() {
+        timeouts.forEach(t => clearTimeout(t));
+        timeouts = [];
+    }
 
     function startTyping() {
         displayedCommand = '';
@@ -33,10 +45,10 @@
             if (i < command.length && isVisible) {
                 displayedCommand = command.slice(0, i + 1);
                 i++;
-                typingTimeout = setTimeout(typeChar, 80 + Math.random() * 60);
+                addTimeout(typeChar, 80 + Math.random() * 60);
             }
         }
-        typingTimeout = setTimeout(typeChar, 100);
+        addTimeout(typeChar, 100);
     }
 
     function doTypeThenPaste() {
@@ -48,97 +60,81 @@
             if (prefixI < commandPrefix.length && isVisible) {
                 displayedCommand = commandPrefix.slice(0, prefixI + 1);
                 prefixI++;
-                typingTimeout = setTimeout(
-                    typePrefixChar,
-                    80 + Math.random() * 60
-                );
-            } else {
+                addTimeout(typePrefixChar, 80 + Math.random() * 60);
+            } else if (isVisible) {
                 // Step 2: Paste the URL with toast
-                typingTimeout = setTimeout(() => {
+                addTimeout(() => {
                     showPasteToast = true;
                     displayedCommand = commandPrefix + pasteUrl;
 
                     // Step 3: Hide toast and type suffix
-                    typingTimeout = setTimeout(() => {
+                    addTimeout(() => {
                         showPasteToast = false;
 
                         if (commandSuffix) {
                             let suffixI = 0;
                             function typeSuffixChar() {
-                                if (
-                                    suffixI < commandSuffix.length &&
-                                    isVisible
-                                ) {
-                                    displayedCommand =
-                                        commandPrefix +
-                                        pasteUrl +
-                                        commandSuffix.slice(0, suffixI + 1);
+                                if (suffixI < commandSuffix.length && isVisible) {
+                                    displayedCommand = commandPrefix + pasteUrl + commandSuffix.slice(0, suffixI + 1);
                                     suffixI++;
-                                    typingTimeout = setTimeout(
-                                        typeSuffixChar,
-                                        80 + Math.random() * 60
-                                    );
+                                    addTimeout(typeSuffixChar, 80 + Math.random() * 60);
                                 }
                             }
-                            typingTimeout = setTimeout(typeSuffixChar, 200);
+                            addTimeout(typeSuffixChar, 200);
                         }
                     }, 800);
                 }, 300);
             }
         }
-        typingTimeout = setTimeout(typePrefixChar, 100);
+        addTimeout(typePrefixChar, 100);
     }
 
     function doPaste() {
         showPasteToast = true;
         displayedCommand = command;
-        typingTimeout = setTimeout(() => {
+        addTimeout(() => {
             showPasteToast = false;
         }, 800);
     }
 
     function stopTyping() {
-        if (typingTimeout) {
-            clearTimeout(typingTimeout);
-            typingTimeout = undefined;
-        }
+        clearAllTimeouts();
         displayedCommand = '';
         showPasteToast = false;
+        hasStarted = false;
     }
 
     function handleVisibility(visible: boolean) {
-        if (visible && !isVisible) {
+        if (visible && !hasStarted) {
             isVisible = true;
-            stopTyping();
-            if (pasteUrl && commandPrefix) {
-                typingTimeout = setTimeout(doTypeThenPaste, pasteDelay);
+            hasStarted = true;
+            clearAllTimeouts();
+            displayedCommand = '';
+            
+            if (isPasteTypingMode) {
+                addTimeout(doTypeThenPaste, pasteDelay || delayStart);
             } else if (pasteMode) {
-                typingTimeout = setTimeout(doPaste, pasteDelay);
+                addTimeout(doPaste, pasteDelay || delayStart);
             } else if (typing) {
-                typingTimeout = setTimeout(startTyping, delayStart);
+                addTimeout(startTyping, delayStart);
             }
-        } else if (!visible && isVisible) {
+        } else if (!visible && hasStarted) {
             isVisible = false;
             stopTyping();
         }
     }
 
     onMount(() => {
-        const hasPasteTyping = pasteUrl && commandPrefix;
-
-        if (!typing && !pasteMode && !hasPasteTyping) {
+        if (!typing && !pasteMode && !isPasteTypingMode) {
             displayedCommand = command;
             return;
         }
 
         observer = new IntersectionObserver(
             (entries) => {
-                const entry = entries[0];
-                if (entry) {
-                    handleVisibility(
-                        entry.isIntersecting && entry.intersectionRatio >= 0.5
-                    );
-                }
+                entries.forEach((entry) => {
+                    handleVisibility(entry.isIntersecting && entry.intersectionRatio >= 0.5);
+                });
             },
             { threshold: [0, 0.5, 1] }
         );
@@ -152,7 +148,7 @@
         if (observer) {
             observer.disconnect();
         }
-        stopTyping();
+        clearAllTimeouts();
     });
 </script>
 

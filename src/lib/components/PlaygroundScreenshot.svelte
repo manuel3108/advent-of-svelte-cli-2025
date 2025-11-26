@@ -32,10 +32,11 @@
             showCopiedToast = true;
         }, 1400);
 
-        // Phase 4: Hide cursor and toast (cursor goes to terminal)
+        // Phase 4: Hide cursor and toast, deselect URL (cursor goes to terminal)
         setTimeout(() => {
             cursorVisible = false;
             showCopiedToast = false;
+            urlSelected = false;
         }, 2000);
     }
 

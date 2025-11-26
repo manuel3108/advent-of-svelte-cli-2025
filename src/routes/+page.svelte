@@ -93,8 +93,8 @@
                     <PlaygroundScreenshot />
                     <Terminal
                         pasteUrl="svelte.dev/playground/abc123def"
-                        commandPrefix="npx sv create --from-playground=""
-                        commandSuffix="""
+                        commandPrefix='npx sv create --from-playground="'
+                        commandSuffix='"'
                         pasteDelay={2200}
                     />
                 </div>
@@ -106,7 +106,6 @@
                 <div class="content">
                     <Calendar />
                     <h2 class="outro-title">See you tomorrow!</h2>
-                    <p class="next-topic">Next: Attachments in Svelte</p>
                 </div>
             </Slide>
         </Presentation>
