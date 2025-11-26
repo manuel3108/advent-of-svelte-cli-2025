@@ -92,8 +92,9 @@
                     </h2>
                     <PlaygroundScreenshot />
                     <Terminal
-                        command="npx sv create --from-playground="...""
+                        command={'npx sv create --from-playground="svelte.dev/playground/abc123def"'}
                         typing={true}
+                        delayStart={2500}
                     />
                 </div>
             </Slide>

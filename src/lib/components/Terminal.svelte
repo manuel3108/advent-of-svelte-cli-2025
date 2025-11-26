@@ -1,14 +1,13 @@
 <script lang="ts">
     import { onMount } from 'svelte';
 
-    let { command, typing = false } = $props();
+    let { command, typing = false, delayStart = 0 } = $props();
 
     let displayedCommand = $state('');
-    let isTyping = $state(false);
     let containerEl: HTMLDivElement;
+    let typingTimeout: ReturnType<typeof setTimeout> | null = null;
 
     function startTyping() {
-        isTyping = true;
         displayedCommand = '';
         let i = 0;
 
@@ -16,12 +15,18 @@
             if (i < command.length) {
                 displayedCommand = command.slice(0, i + 1);
                 i++;
-                setTimeout(typeChar, 50 + Math.random() * 30);
-            } else {
-                isTyping = false;
+                typingTimeout = setTimeout(typeChar, 80 + Math.random() * 60);
             }
         }
-        typeChar();
+        typingTimeout = setTimeout(typeChar, 100);
+    }
+
+    function stopTyping() {
+        if (typingTimeout) {
+            clearTimeout(typingTimeout);
+            typingTimeout = null;
+        }
+        displayedCommand = '';
     }
 
     onMount(() => {
@@ -34,20 +39,27 @@
         const observer = new IntersectionObserver(
             (entries) => {
                 entries.forEach((entry) => {
-                    if (entry.isIntersecting) {
-                        // Reset and start typing when slide becomes visible
-                        displayedCommand = '';
-                        isTyping = false;
-                        setTimeout(startTyping, 100);
+                    if (
+                        entry.isIntersecting &&
+                        entry.intersectionRatio >= 0.5
+                    ) {
+                        // Stop any existing typing and restart
+                        stopTyping();
+                        typingTimeout = setTimeout(startTyping, delayStart);
+                    } else {
+                        stopTyping();
                     }
                 });
             },
-            { threshold: 0.5 }
+            { threshold: [0, 0.5, 1] }
         );
 
         observer.observe(containerEl);
 
-        return () => observer.disconnect();
+        return () => {
+            observer.disconnect();
+            stopTyping();
+        };
     });
 </script>
 
