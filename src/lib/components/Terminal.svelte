@@ -39,47 +39,54 @@
         typingTimeout = setTimeout(typeChar, 100);
     }
 
-    function doPasteAndType() {
-        // Step 1: Show pasted URL with toast
-        showPasteToast = true;
-        displayedCommand = pasteUrl;
+    function doTypeThenPaste() {
+        displayedCommand = '';
 
-        // Step 2: Hide toast after 800ms
-        typingTimeout = setTimeout(() => {
-            showPasteToast = false;
+        // Step 1: Type the prefix first
+        let prefixI = 0;
+        function typePrefixChar() {
+            if (prefixI < commandPrefix.length && isVisible) {
+                displayedCommand = commandPrefix.slice(0, prefixI + 1);
+                prefixI++;
+                typingTimeout = setTimeout(
+                    typePrefixChar,
+                    80 + Math.random() * 60
+                );
+            } else {
+                // Step 2: Paste the URL with toast
+                typingTimeout = setTimeout(() => {
+                    showPasteToast = true;
+                    displayedCommand = commandPrefix + pasteUrl;
 
-            // Step 3: Start typing prefix before the URL
-            let prefixI = 0;
-            function typePrefixChar() {
-                if (prefixI < commandPrefix.length && isVisible) {
-                    displayedCommand =
-                        commandPrefix.slice(0, prefixI + 1) + pasteUrl;
-                    prefixI++;
-                    typingTimeout = setTimeout(
-                        typePrefixChar,
-                        80 + Math.random() * 60
-                    );
-                } else if (commandSuffix) {
-                    // Step 4: Type suffix after the URL
-                    let suffixI = 0;
-                    function typeSuffixChar() {
-                        if (suffixI < commandSuffix.length && isVisible) {
-                            displayedCommand =
-                                commandPrefix +
-                                pasteUrl +
-                                commandSuffix.slice(0, suffixI + 1);
-                            suffixI++;
-                            typingTimeout = setTimeout(
-                                typeSuffixChar,
-                                80 + Math.random() * 60
-                            );
+                    // Step 3: Hide toast and type suffix
+                    typingTimeout = setTimeout(() => {
+                        showPasteToast = false;
+
+                        if (commandSuffix) {
+                            let suffixI = 0;
+                            function typeSuffixChar() {
+                                if (
+                                    suffixI < commandSuffix.length &&
+                                    isVisible
+                                ) {
+                                    displayedCommand =
+                                        commandPrefix +
+                                        pasteUrl +
+                                        commandSuffix.slice(0, suffixI + 1);
+                                    suffixI++;
+                                    typingTimeout = setTimeout(
+                                        typeSuffixChar,
+                                        80 + Math.random() * 60
+                                    );
+                                }
+                            }
+                            typingTimeout = setTimeout(typeSuffixChar, 200);
                         }
-                    }
-                    typingTimeout = setTimeout(typeSuffixChar, 100);
-                }
+                    }, 800);
+                }, 300);
             }
-            typingTimeout = setTimeout(typePrefixChar, 300);
-        }, 800);
+        }
+        typingTimeout = setTimeout(typePrefixChar, 100);
     }
 
     function doPaste() {
@@ -104,7 +111,7 @@
             isVisible = true;
             stopTyping();
             if (pasteUrl && commandPrefix) {
-                typingTimeout = setTimeout(doPasteAndType, pasteDelay);
+                typingTimeout = setTimeout(doTypeThenPaste, pasteDelay);
             } else if (pasteMode) {
                 typingTimeout = setTimeout(doPaste, pasteDelay);
             } else if (typing) {
