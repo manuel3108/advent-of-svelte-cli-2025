@@ -170,9 +170,8 @@
             <span class="command"
                 >{typing || pasteMode || isPasteTypingMode
                     ? displayedCommand
-                    : command}</span
+                    : command}<span class="cursor"></span></span
             >
-            <span class="cursor"></span>
         </div>
     </div>
     {#if showPasteToast}
@@ -225,13 +224,14 @@
 
     .terminal-body {
         padding: 1rem;
-        min-height: 70px;
+        min-height: 90px;
     }
 
     .line {
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         gap: 0.5rem;
+        text-align: left;
     }
 
     .prompt {
@@ -245,15 +245,16 @@
         font-size: 0.9rem;
         word-break: break-all;
         line-height: 1.4;
+        text-align: left;
     }
 
     .cursor {
         display: inline-block;
         width: 10px;
-        height: 1.2em;
+        height: 1.1em;
         background: #64ffda;
         animation: blink 1s step-end infinite;
-        margin-left: 2px;
+        vertical-align: text-bottom;
     }
 
     @keyframes blink {
