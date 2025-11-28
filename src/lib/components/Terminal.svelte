@@ -1,178 +1,239 @@
 <script lang="ts">
-    import { onMount, onDestroy } from 'svelte';
+    import { onMount } from 'svelte';
 
-    // pasteUrl: the URL to paste first
-    // commandPrefix: what to type before the URL (e.g. 'npx sv create --from-playground="')
-    // commandSuffix: what to type after the URL (e.g. '"')
+    interface Props {
+        /** The full command to display (used when not in animated mode, or as the typed text in typing mode) */
+        command?: string;
+        /** Enable character-by-character typing animation */
+        typing?: boolean;
+        /** Delay in ms before animation starts */
+        delay?: number;
+        /** @deprecated Use `delay` instead */
+        pasteDelay?: number;
+        /** @deprecated Use `delay` instead */
+        delayStart?: number;
+        /** Show a "pasted" toast animation instead of typing */
+        paste?: boolean;
+        /** @deprecated Use `paste` instead */
+        pasteMode?: boolean;
+        /** URL to paste (enables paste-typing mode when combined with prefix) */
+        pasteUrl?: string;
+        /** Text to type before pasting the URL */
+        prefix?: string;
+        /** @deprecated Use `prefix` instead */
+        commandPrefix?: string;
+        /** Text to type after pasting the URL */
+        suffix?: string;
+        /** @deprecated Use `suffix` instead */
+        commandSuffix?: string;
+    }
+
     let {
         command = '',
         typing = false,
-        delayStart = 0,
-        pasteMode = false,
-        pasteDelay = 0,
+        delay = 0,
+        pasteDelay,
+        delayStart,
+        paste = false,
+        pasteMode,
         pasteUrl = '',
-        commandPrefix = '',
-        commandSuffix = '',
-    } = $props();
+        prefix = '',
+        commandPrefix,
+        suffix = '',
+        commandSuffix,
+    }: Props = $props();
 
-    let displayedCommand = $state('');
+    // Handle deprecated props
+    const actualDelay = pasteDelay ?? delayStart ?? delay;
+    const actualPaste = pasteMode ?? paste;
+    const actualPrefix = commandPrefix ?? prefix;
+    const actualSuffix = commandSuffix ?? suffix;
+
+    // Determine if this is a paste-url mode (--from-playground use case)
+    const isPasteUrlMode = pasteUrl !== '';
+
+    // Build the full command text
+    const fullCommand = isPasteUrlMode
+        ? `${actualPrefix}${pasteUrl}${actualSuffix}`
+        : command;
+
+    // Animation state
+    let terminalEl: HTMLDivElement;
+    let displayedText = $state('');
+    let showCursor = $state(true);
     let showPasteToast = $state(false);
-    let containerEl: HTMLDivElement | null = null;
-    let timeouts: ReturnType<typeof setTimeout>[] = [];
-    let observer: IntersectionObserver | null = null;
-    let isVisible = false;
-    let hasStarted = false;
+    let animationComplete = $state(false);
+    let hasBeenVisible = false;
+    let isCurrentlyVisible = false;
+    let cursorInterval: ReturnType<typeof setInterval> | null = null;
+    let animationTimeouts: ReturnType<typeof setTimeout>[] = [];
 
-    // Derived - check if we're in paste-then-type mode
-    const isPasteTypingMode = Boolean(pasteUrl && commandPrefix);
+    function clearAllTimeouts() {
+        animationTimeouts.forEach((t) => clearTimeout(t));
+        animationTimeouts = [];
+    }
 
     function addTimeout(fn: () => void, delay: number) {
         const t = setTimeout(fn, delay);
-        timeouts.push(t);
+        animationTimeouts.push(t);
         return t;
     }
 
-    function clearAllTimeouts() {
-        timeouts.forEach(t => clearTimeout(t));
-        timeouts = [];
-    }
-
-    function startTyping() {
-        displayedCommand = '';
-        let i = 0;
-
-        function typeChar() {
-            if (i < command.length && isVisible) {
-                displayedCommand = command.slice(0, i + 1);
-                i++;
-                addTimeout(typeChar, 80 + Math.random() * 60);
-            }
-        }
-        addTimeout(typeChar, 100);
-    }
-
-    function doTypeThenPaste() {
-        displayedCommand = '';
-
-        // Step 1: Type the prefix first
-        let prefixI = 0;
-        function typePrefixChar() {
-            if (prefixI < commandPrefix.length && isVisible) {
-                displayedCommand = commandPrefix.slice(0, prefixI + 1);
-                prefixI++;
-                addTimeout(typePrefixChar, 80 + Math.random() * 60);
-            } else if (isVisible) {
-                // Step 2: Paste the URL with toast
-                addTimeout(() => {
-                    showPasteToast = true;
-                    displayedCommand = commandPrefix + pasteUrl;
-
-                    // Step 3: Hide toast and type suffix
-                    addTimeout(() => {
-                        showPasteToast = false;
-
-                        if (commandSuffix) {
-                            let suffixI = 0;
-                            function typeSuffixChar() {
-                                if (suffixI < commandSuffix.length && isVisible) {
-                                    displayedCommand = commandPrefix + pasteUrl + commandSuffix.slice(0, suffixI + 1);
-                                    suffixI++;
-                                    addTimeout(typeSuffixChar, 80 + Math.random() * 60);
-                                }
-                            }
-                            addTimeout(typeSuffixChar, 200);
-                        }
-                    }, 800);
-                }, 300);
-            }
-        }
-        addTimeout(typePrefixChar, 100);
-    }
-
-    function doPaste() {
-        showPasteToast = true;
-        displayedCommand = command;
-        addTimeout(() => {
-            showPasteToast = false;
-        }, 800);
-    }
-
-    function stopTyping() {
+    function runAnimation() {
+        // Reset state for new animation
         clearAllTimeouts();
-        displayedCommand = '';
+        displayedText = '';
         showPasteToast = false;
-        hasStarted = false;
-    }
+        animationComplete = false;
 
-    function handleVisibility(visible: boolean) {
-        if (visible && !hasStarted) {
-            isVisible = true;
-            hasStarted = true;
-            clearAllTimeouts();
-            displayedCommand = '';
-            
-            if (isPasteTypingMode) {
-                addTimeout(doTypeThenPaste, pasteDelay || delayStart);
-            } else if (pasteMode) {
-                addTimeout(doPaste, pasteDelay || delayStart);
-            } else if (typing) {
-                addTimeout(startTyping, delayStart);
-            }
-        } else if (!visible && hasStarted) {
-            isVisible = false;
-            stopTyping();
-        }
-    }
-
-    onMount(() => {
-        if (!typing && !pasteMode && !isPasteTypingMode) {
-            displayedCommand = command;
+        if (!typing && !isPasteUrlMode) {
+            // No animation, show full text
+            displayedText = fullCommand;
+            animationComplete = true;
             return;
         }
 
-        observer = new IntersectionObserver(
+        // Start animation after delay
+        addTimeout(() => {
+            if (isPasteUrlMode) {
+                animatePasteUrl();
+            } else {
+                animateTyping(fullCommand);
+            }
+        }, actualDelay);
+    }
+
+    onMount(() => {
+        // Cursor blink effect
+        cursorInterval = setInterval(() => {
+            if (!animationComplete) {
+                showCursor = !showCursor;
+            } else {
+                showCursor = true;
+            }
+        }, 530);
+
+        // Use IntersectionObserver to detect when terminal becomes visible
+        const observer = new IntersectionObserver(
             (entries) => {
                 entries.forEach((entry) => {
-                    handleVisibility(entry.isIntersecting && entry.intersectionRatio >= 0.5);
+                    const wasVisible = isCurrentlyVisible;
+                    isCurrentlyVisible =
+                        entry.isIntersecting && entry.intersectionRatio >= 0.5;
+
+                    // Run animation when becoming visible (transitioning from not visible to visible)
+                    if (isCurrentlyVisible && !wasVisible) {
+                        hasBeenVisible = true;
+                        runAnimation();
+                    }
                 });
             },
             { threshold: [0, 0.5, 1] }
         );
 
-        if (containerEl) {
-            observer.observe(containerEl);
-        }
+        observer.observe(terminalEl);
+
+        return () => {
+            observer.disconnect();
+            clearAllTimeouts();
+            if (cursorInterval) clearInterval(cursorInterval);
+        };
     });
 
-    onDestroy(() => {
-        if (observer) {
-            observer.disconnect();
-        }
-        clearAllTimeouts();
-    });
+    function animateTyping(text: string) {
+        let index = 0;
+        const typingSpeed = 50 + Math.random() * 30; // Slight randomness for realism
+
+        const typeNext = () => {
+            if (index < text.length) {
+                displayedText = text.slice(0, index + 1);
+                index++;
+                addTimeout(typeNext, typingSpeed + Math.random() * 20);
+            } else {
+                animationComplete = true;
+            }
+        };
+
+        typeNext();
+    }
+
+    function animatePasteUrl() {
+        // First, type the prefix
+        let prefixIndex = 0;
+        const prefixTypingSpeed = 50;
+
+        const typePrefix = () => {
+            if (prefixIndex < actualPrefix.length) {
+                displayedText = actualPrefix.slice(0, prefixIndex + 1);
+                prefixIndex++;
+                addTimeout(typePrefix, prefixTypingSpeed + Math.random() * 20);
+            } else {
+                // After prefix, show paste toast and paste the URL
+                addTimeout(() => {
+                    showPasteToast = true;
+                    addTimeout(() => {
+                        displayedText = actualPrefix + pasteUrl;
+                        showPasteToast = false;
+
+                        // Then type the suffix
+                        if (actualSuffix) {
+                            addTimeout(() => typeSuffix(), 100);
+                        } else {
+                            animationComplete = true;
+                        }
+                    }, 600);
+                }, 200);
+            }
+        };
+
+        const typeSuffix = () => {
+            let suffixIndex = 0;
+            const typeSuffixChar = () => {
+                if (suffixIndex < actualSuffix.length) {
+                    displayedText =
+                        actualPrefix +
+                        pasteUrl +
+                        actualSuffix.slice(0, suffixIndex + 1);
+                    suffixIndex++;
+                    addTimeout(
+                        typeSuffixChar,
+                        prefixTypingSpeed + Math.random() * 20
+                    );
+                } else {
+                    animationComplete = true;
+                }
+            };
+            typeSuffixChar();
+        };
+
+        typePrefix();
+    }
 </script>
 
-<div class="terminal" bind:this={containerEl}>
+<div class="terminal" bind:this={terminalEl}>
     <div class="terminal-header">
-        <div class="dots">
-            <span class="dot red"></span>
-            <span class="dot yellow"></span>
-            <span class="dot green"></span>
+        <div class="terminal-buttons">
+            <span class="btn close"></span>
+            <span class="btn minimize"></span>
+            <span class="btn maximize"></span>
         </div>
+        <span class="terminal-title">Terminal</span>
     </div>
     <div class="terminal-body">
-        <div class="line">
+        <div class="terminal-line">
             <span class="prompt">$</span>
-            <span class="command"
-                >{typing || pasteMode || isPasteTypingMode
-                    ? displayedCommand
-                    : command}<span class="cursor"></span></span
-            >
+            <span class="command-text">{displayedText}</span>
+            {#if !animationComplete}
+                <span class="cursor" class:visible={showCursor}>▌</span>
+            {/if}
         </div>
+        {#if showPasteToast}
+            <div class="paste-toast">
+                <span class="paste-icon">📋</span>
+                <span>Pasted!</span>
+            </div>
+        {/if}
     </div>
-    {#if showPasteToast}
-        <div class="paste-toast">📋 Pasted!</div>
-    {/if}
 </div>
 
 <style>
@@ -181,91 +242,87 @@
         background: #0d1117;
         border-radius: 12px;
         overflow: hidden;
-        box-shadow:
-            0 10px 40px rgba(0, 0, 0, 0.6),
-            0 0 0 1px rgba(255, 255, 255, 0.1);
-        font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+        border: 1px solid #30363d;
+        font-family: 'JetBrains Mono', monospace;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
     }
 
     .terminal-header {
         display: flex;
         align-items: center;
-        padding: 0.6rem 0.8rem;
+        padding: 0.6rem 0.9rem;
         background: #161b22;
         border-bottom: 1px solid #30363d;
+        position: relative;
     }
 
-    .dots {
+    .terminal-buttons {
         display: flex;
         gap: 0.4rem;
     }
 
-    .dot {
-        width: 10px;
-        height: 10px;
+    .btn {
+        width: 12px;
+        height: 12px;
         border-radius: 50%;
     }
 
-    .dot.red {
-        background: #ff5f57;
+    .btn.close {
+        background: #ff5f56;
     }
 
-    .dot.yellow {
+    .btn.minimize {
         background: #ffbd2e;
     }
 
-    .dot.green {
-        background: #28c840;
+    .btn.maximize {
+        background: #27ca40;
+    }
+
+    .terminal-title {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 0.75rem;
+        color: #8b949e;
+        font-weight: 500;
     }
 
     .terminal-body {
         padding: 1rem;
-        min-height: 90px;
+        min-height: 2.5rem;
+        position: relative;
     }
 
-    .line {
+    .terminal-line {
         display: flex;
-        align-items: flex-start;
+        align-items: center;
         gap: 0.5rem;
-        text-align: left;
+        flex-wrap: wrap;
     }
 
     .prompt {
         color: #64ffda;
-        font-weight: bold;
-        font-size: 1rem;
+        font-weight: 600;
+        font-size: 0.9rem;
     }
 
-    .command {
+    .command-text {
         color: #e6edf3;
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         word-break: break-all;
-        line-height: 1.4;
-        text-align: left;
     }
 
     .cursor {
+        color: #64ffda;
+        font-size: 0.9rem;
+        opacity: 0;
         display: inline-block;
-        width: 10px;
-        height: 1.1em;
-        background: #64ffda;
-        animation: blink 1s step-end infinite;
-        vertical-align: text-bottom;
+        width: 0.5em;
     }
 
-    @keyframes blink {
-        0%,
-        50% {
-            opacity: 1;
-        }
-        51%,
-        100% {
-            opacity: 0;
-        }
-    }
-
-    .terminal {
-        position: relative;
+    .cursor.visible {
+        opacity: 1;
     }
 
     .paste-toast {
@@ -273,22 +330,30 @@
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        background: #238636;
-        color: white;
+        background: rgba(100, 255, 218, 0.15);
+        border: 1px solid rgba(100, 255, 218, 0.4);
         padding: 0.5rem 1rem;
         border-radius: 8px;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #64ffda;
         font-size: 0.85rem;
         font-weight: 600;
-        z-index: 100;
-        animation: fadeInPaste 0.2s ease;
+        animation: toastPop 0.3s ease-out;
+        box-shadow: 0 4px 20px rgba(100, 255, 218, 0.2);
     }
 
-    @keyframes fadeInPaste {
-        from {
+    .paste-icon {
+        font-size: 1rem;
+    }
+
+    @keyframes toastPop {
+        0% {
             opacity: 0;
             transform: translate(-50%, -50%) scale(0.8);
         }
-        to {
+        100% {
             opacity: 1;
             transform: translate(-50%, -50%) scale(1);
         }
