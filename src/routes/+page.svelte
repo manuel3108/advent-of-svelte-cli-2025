@@ -65,7 +65,7 @@
                     </svg>
                     <h1 class="title">
                         <span class="day">Day 2</span>
-                        <span class="main-title">Svelte CLI in 2025</span>
+                        <span class="main-title">Svelte CLI</span>
                     </h1>
                 </div>
             </Slide>
@@ -324,12 +324,6 @@
         line-height: 1.2;
     }
 
-    .subtitle {
-        font-size: 1rem;
-        color: #a8b2d1;
-        margin-top: 1rem;
-    }
-
     .svelte-logo-large {
         margin-bottom: 1rem;
         filter: drop-shadow(0 0 30px rgba(255, 62, 0, 0.4));
@@ -346,20 +340,6 @@
 
     .command-title .prefix {
         color: #64ffda;
-    }
-
-    /* Outro Styles */
-    .outro-title {
-        font-size: 1.6rem;
-        font-weight: 700;
-        color: #ccd6f6;
-        margin-top: 1.5rem;
-    }
-
-    .next-topic {
-        font-size: 1rem;
-        color: #64ffda;
-        margin-top: 0.5rem;
     }
 
     /* Recap Window */
@@ -429,14 +409,6 @@
         align-items: center;
         gap: 0.5rem;
         font-size: 1rem;
-    }
-
-    .recap-item.highlight {
-        background: rgba(100, 255, 218, 0.1);
-        padding: 0.5rem 0.8rem;
-        margin: 0.3rem -0.8rem 0;
-        border-radius: 6px;
-        border-left: 3px solid #64ffda;
     }
 
     .recap-prefix {
