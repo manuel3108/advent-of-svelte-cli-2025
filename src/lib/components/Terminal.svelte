@@ -65,18 +65,6 @@
     let showPasteToast = $state(false);
     let animationComplete = $state(false);
     let timeoutIds: number[] = [];
-    let shownText = $state('');
-
-    $effect(() => {
-        const t = async () => {
-            console.log('asd1', displayedText);
-            await tick();
-            console.log('asd2', displayedText);
-
-            shownText = displayedText;
-        };
-        t();
-    });
 
     function clearTimeouts() {
         timeoutIds.forEach((id) => clearTimeout(id));
@@ -202,7 +190,7 @@
     <div class="terminal-body">
         <div class="terminal-line">
             <span class="prompt">$</span>
-            <span class="command-text">{@html shownText}</span>
+            <span class="command-text">{@html displayedText}</span>
             {#if !animationComplete}
                 <span class="cursor" class:visible={showCursor}>▌</span>
             {/if}
