@@ -71,6 +71,11 @@
         timeoutIds = [];
     }
 
+    // Insert word break opportunities before slashes and quotes for better line breaking
+    function formatForDisplay(text: string): string {
+        return text.replace(/\//g, '<wbr>/').replace(/"/g, '<wbr>"');
+    }
+
     function scheduleTimeout(fn: () => void, ms: number) {
         const id = setTimeout(fn, ms) as unknown as number;
         timeoutIds.push(id);
@@ -82,7 +87,9 @@
         function typeNext() {
             if (index < text.length) {
                 index++;
-                displayedText = baseText + text.slice(0, index);
+                displayedText = formatForDisplay(
+                    baseText + text.slice(0, index)
+                );
                 scheduleTimeout(typeNext, 50 + Math.random() * 30);
             } else {
                 onComplete();
@@ -99,7 +106,7 @@
         animationComplete = false;
 
         if (!typing && !isPasteUrlMode) {
-            displayedText = fullCommand;
+            displayedText = formatForDisplay(fullCommand);
             animationComplete = true;
             return;
         }
@@ -111,27 +118,31 @@
                     // Phase 2: Show paste toast
                     scheduleTimeout(() => {
                         showPasteToast = true;
-                        // Phase 3: Paste URL
+                        // Phase 3: Paste URL (after toast shows for a moment)
                         scheduleTimeout(() => {
-                            displayedText = actualPrefix + pasteUrl;
-                            showPasteToast = false;
-
-                            // Phase 4: Type suffix if exists
-                            if (actualSuffix) {
-                                scheduleTimeout(() => {
-                                    typeText(
-                                        actualSuffix,
-                                        actualPrefix + pasteUrl,
-                                        () => {
-                                            animationComplete = true;
-                                        }
-                                    );
-                                }, 100);
-                            } else {
-                                animationComplete = true;
-                            }
-                        }, 600);
-                    }, 200);
+                            displayedText = formatForDisplay(
+                                actualPrefix + pasteUrl
+                            );
+                            // Phase 4: Hide toast after URL is pasted
+                            scheduleTimeout(() => {
+                                showPasteToast = false;
+                                // Phase 5: Type suffix if exists
+                                if (actualSuffix) {
+                                    scheduleTimeout(() => {
+                                        typeText(
+                                            actualSuffix,
+                                            actualPrefix + pasteUrl,
+                                            () => {
+                                                animationComplete = true;
+                                            }
+                                        );
+                                    }, 100);
+                                } else {
+                                    animationComplete = true;
+                                }
+                            }, 500);
+                        }, 400);
+                    }, 300);
                 });
             } else {
                 typeText(fullCommand, '', () => {
@@ -143,9 +154,16 @@
 
     // React to visibility changes - only trigger on becoming visible
     let wasVisible = false;
+    let initialized = false;
+    let hasAnimated = false;
     $effect(() => {
-        if (isVisible && !wasVisible) {
+        if (isVisible && !wasVisible && initialized) {
+            hasAnimated = true;
             runAnimation();
+        }
+        // Only reset hasAnimated when fully leaving view
+        if (!isVisible && wasVisible) {
+            hasAnimated = false;
         }
         wasVisible = isVisible;
     });
@@ -169,7 +187,15 @@
             { threshold: [0, 0.5, 1] }
         );
 
-        observer.observe(terminalEl);
+        // Delay observing to skip the initial intersection callback
+        // that fires immediately when observing
+        requestAnimationFrame(() => {
+            observer.observe(terminalEl);
+            // Mark as initialized after a frame to skip initial state
+            requestAnimationFrame(() => {
+                initialized = true;
+            });
+        });
 
         return () => {
             observer.disconnect();
@@ -190,10 +216,12 @@
     <div class="terminal-body">
         <div class="terminal-line">
             <span class="prompt">$</span>
-            <span class="command-text">{@html displayedText}</span>
-            {#if !animationComplete}
-                <span class="cursor" class:visible={showCursor}>▌</span>
-            {/if}
+            <span class="command-text"
+                >{@html displayedText}{#if !animationComplete}<span
+                        class="cursor"
+                        class:visible={showCursor}>▌</span
+                    >{/if}</span
+            >
         </div>
         {#if showPasteToast}
             <div class="paste-toast">
@@ -206,7 +234,7 @@
 
 <style>
     .terminal {
-        width: 92%;
+        width: 100%;
         background: #0d1117;
         border-radius: 12px;
         overflow: hidden;
@@ -259,33 +287,36 @@
     }
 
     .terminal-body {
-        padding: 1rem;
-        min-height: 2.5rem;
+        padding: 1.2rem;
+        min-height: 3rem;
         position: relative;
     }
 
     .terminal-line {
         display: flex;
-        align-items: center;
+        align-items: baseline;
         gap: 0.5rem;
-        flex-wrap: wrap;
+        text-align: left;
     }
 
     .prompt {
         color: #64ffda;
         font-weight: 600;
-        font-size: 0.9rem;
+        font-size: 1.1rem;
+        flex-shrink: 0;
     }
 
     .command-text {
         color: #e6edf3;
-        font-size: 0.85rem;
-        word-break: break-all;
+        font-size: 1rem;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+        flex: 1;
     }
 
     .cursor {
         color: #64ffda;
-        font-size: 0.9rem;
+        font-size: 1.1rem;
         opacity: 0;
         display: inline-block;
         width: 0.5em;
@@ -300,18 +331,19 @@
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        background: rgba(100, 255, 218, 0.15);
-        border: 1px solid rgba(100, 255, 218, 0.4);
-        padding: 0.5rem 1rem;
+        background: #238636;
+        border: none;
+        padding: 0.6rem 1.2rem;
         border-radius: 8px;
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        color: #64ffda;
-        font-size: 0.85rem;
+        color: white;
+        font-size: 1rem;
         font-weight: 600;
         animation: toastPop 0.3s ease-out;
-        box-shadow: 0 4px 20px rgba(100, 255, 218, 0.2);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        z-index: 20;
     }
 
     .paste-icon {

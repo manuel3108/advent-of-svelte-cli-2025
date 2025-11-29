@@ -114,16 +114,19 @@
         <div class="code-section">
             <div class="line"><span class="tag">&lt;script&gt;</span></div>
             <div class="line">
-                <span class="keyword">let</span>
-                <span class="variable">count</span>
-                = <span class="state">$state</span>(<span class="number">0</span
-                >);
+                <span class="keyword">let</span>&nbsp;<span class="variable"
+                    >count</span
+                >&nbsp;<span class="operator">=</span>&nbsp;<span class="state"
+                    >$state</span
+                ><span class="paren">(</span><span class="number">0</span><span
+                    class="paren">)</span
+                ><span class="punctuation">;</span>
             </div>
             <div class="line"><span class="tag">&lt;/script&gt;</span></div>
             <div class="line">
                 <span class="tag">&lt;button&gt;</span><span class="text"
-                    >Clicks:
-                </span><span class="brace">{'{'}</span><span class="variable"
+                    >Clicks:&nbsp;</span
+                ><span class="brace">{'{'}</span><span class="variable"
                     >count</span
                 ><span class="brace">{'}'}</span><span class="tag"
                     >&lt;/button&gt;</span
@@ -149,7 +152,7 @@
 
 <style>
     .browser {
-        width: 92%;
+        width: 100%;
         background: #1a1a2e;
         border-radius: 12px;
         overflow: hidden;
@@ -165,7 +168,7 @@
         align-items: center;
         gap: 0.6rem;
         padding: 0.5rem 0.7rem;
-        background: #2d2d44;
+        background: #161b22;
         border-bottom: 1px solid #30363d;
     }
 
@@ -194,10 +197,11 @@
         flex: 1;
         display: flex;
         align-items: center;
-        gap: 0.4rem;
-        background: #0d1117;
-        padding: 0.35rem 0.6rem;
+        gap: 0.5rem;
+        background: #21262d;
+        padding: 0.5rem 0.8rem;
         border-radius: 6px;
+        border: 1px solid #30363d;
         transition: all 0.3s ease;
     }
 
@@ -207,11 +211,11 @@
     }
 
     .lock {
-        font-size: 0.6rem;
+        font-size: 0.8rem;
     }
 
     .url {
-        font-size: 0.65rem;
+        font-size: 0.85rem;
         color: #e6edf3;
         font-family: 'Inter', sans-serif;
     }
@@ -227,9 +231,9 @@
         transform: translateX(-50%);
         background: #238636;
         color: white;
-        padding: 0.4rem 0.8rem;
+        padding: 0.5rem 1rem;
         border-radius: 6px;
-        font-size: 0.7rem;
+        font-size: 0.85rem;
         font-weight: 600;
         z-index: 100;
         animation: fadeIn 0.2s ease;
@@ -254,48 +258,48 @@
     .playground-header {
         display: flex;
         align-items: center;
-        gap: 0.3rem;
-        padding: 0.4rem;
+        gap: 0.4rem;
+        padding: 0.5rem 0.6rem;
         background: #161b22;
         border-radius: 6px;
-        margin-bottom: 0.4rem;
+        margin-bottom: 0.5rem;
     }
 
     .svelte-logo {
-        width: 14px;
-        height: 17px;
+        width: 18px;
+        height: 22px;
     }
 
     .logo-text {
-        font-size: 0.55rem;
+        font-size: 0.75rem;
         font-weight: 700;
         color: #fff;
         letter-spacing: 0.05em;
     }
 
     .playground-label {
-        font-size: 0.5rem;
+        font-size: 0.7rem;
         color: #8b949e;
     }
 
     .section-row {
         display: flex;
         align-items: center;
-        gap: 0.3rem;
-        padding: 0.3rem 0.4rem;
+        gap: 0.4rem;
+        padding: 0.4rem 0.5rem;
         background: #161b22;
         border-radius: 4px;
-        margin-bottom: 0.3rem;
+        margin-bottom: 0.4rem;
     }
 
     .section-label {
-        font-size: 0.6rem;
+        font-size: 0.8rem;
     }
 
     .file {
-        font-size: 0.55rem;
+        font-size: 0.75rem;
         color: #8b949e;
-        padding: 0.15rem 0.4rem;
+        padding: 0.2rem 0.5rem;
         border-radius: 3px;
         background: #21262d;
     }
@@ -307,13 +311,13 @@
 
     .code-section {
         font-family: 'JetBrains Mono', monospace;
-        font-size: 0.5rem;
-        line-height: 1.4;
-        padding: 0.4rem;
+        font-size: 0.7rem;
+        line-height: 1.5;
+        padding: 0.6rem;
         background: #0d1117;
         border: 1px solid #30363d;
         border-radius: 4px;
-        margin-bottom: 0.3rem;
+        margin-bottom: 0.4rem;
         text-align: left;
     }
 
@@ -337,23 +341,32 @@
         color: #79c0ff;
     }
     .text {
-        color: #e6edf3;
+        color: #a5d6ff;
     }
     .brace {
         color: #ffa657;
+    }
+    .operator {
+        color: #e6edf3;
+    }
+    .paren {
+        color: #e6edf3;
+    }
+    .punctuation {
+        color: #e6edf3;
     }
 
     .result-section {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
-        padding: 0.4rem;
+        gap: 0.6rem;
+        padding: 0.5rem 0.6rem;
         background: #161b22;
         border-radius: 4px;
     }
 
     .result-label {
-        font-size: 0.55rem;
+        font-size: 0.75rem;
         color: #8b949e;
     }
 
@@ -361,9 +374,9 @@
         background: #ff3e00;
         color: white;
         border: none;
-        padding: 0.3rem 0.6rem;
+        padding: 0.4rem 0.8rem;
         border-radius: 4px;
-        font-size: 0.55rem;
+        font-size: 0.75rem;
         font-weight: 600;
     }
 

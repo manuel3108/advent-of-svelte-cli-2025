@@ -170,8 +170,8 @@
         align-items: center;
         gap: 1.5rem;
         text-align: center;
-        width: 100%;
-        padding: 0 1rem;
+        width: 96%;
+        padding: 0;
     }
 
     /* Intro Slide Styles */

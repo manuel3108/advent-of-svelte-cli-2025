@@ -38,7 +38,7 @@
 
 <style>
     .file-tree {
-        width: 92%;
+        width: 100%;
         background: #0d1117;
         border-radius: 12px;
         overflow: hidden;
