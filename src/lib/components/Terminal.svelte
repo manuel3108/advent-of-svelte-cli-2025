@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount } from 'svelte';
+    import { onMount, tick } from 'svelte';
 
     interface Props {
         /** The full command to display (used when not in animated mode, or as the typed text in typing mode) */
@@ -59,73 +59,123 @@
 
     // Animation state
     let terminalEl: HTMLDivElement;
+    let isVisible = $state(false);
     let displayedText = $state('');
     let showCursor = $state(true);
     let showPasteToast = $state(false);
     let animationComplete = $state(false);
-    let hasBeenVisible = false;
-    let isCurrentlyVisible = false;
-    let cursorInterval: ReturnType<typeof setInterval> | null = null;
-    let animationTimeouts: ReturnType<typeof setTimeout>[] = [];
+    let timeoutIds: number[] = [];
+    let shownText = $state('');
 
-    function clearAllTimeouts() {
-        animationTimeouts.forEach((t) => clearTimeout(t));
-        animationTimeouts = [];
+    $effect(() => {
+        const t = async () => {
+            console.log('asd1', displayedText);
+            await tick();
+            console.log('asd2', displayedText);
+
+            shownText = displayedText;
+        };
+        t();
+    });
+
+    function clearTimeouts() {
+        timeoutIds.forEach((id) => clearTimeout(id));
+        timeoutIds = [];
     }
 
-    function addTimeout(fn: () => void, delay: number) {
-        const t = setTimeout(fn, delay);
-        animationTimeouts.push(t);
-        return t;
+    function scheduleTimeout(fn: () => void, ms: number) {
+        const id = setTimeout(fn, ms) as unknown as number;
+        timeoutIds.push(id);
+    }
+
+    function typeText(text: string, baseText: string, onComplete: () => void) {
+        let index = 0;
+
+        function typeNext() {
+            if (index < text.length) {
+                index++;
+                displayedText = baseText + text.slice(0, index);
+                scheduleTimeout(typeNext, 50 + Math.random() * 30);
+            } else {
+                onComplete();
+            }
+        }
+
+        typeNext();
     }
 
     function runAnimation() {
-        // Reset state for new animation
-        clearAllTimeouts();
+        clearTimeouts();
         displayedText = '';
         showPasteToast = false;
         animationComplete = false;
 
         if (!typing && !isPasteUrlMode) {
-            // No animation, show full text
             displayedText = fullCommand;
             animationComplete = true;
             return;
         }
 
-        // Start animation after delay
-        addTimeout(() => {
+        scheduleTimeout(() => {
             if (isPasteUrlMode) {
-                animatePasteUrl();
+                // Phase 1: Type prefix
+                typeText(actualPrefix, '', () => {
+                    // Phase 2: Show paste toast
+                    scheduleTimeout(() => {
+                        showPasteToast = true;
+                        // Phase 3: Paste URL
+                        scheduleTimeout(() => {
+                            displayedText = actualPrefix + pasteUrl;
+                            showPasteToast = false;
+
+                            // Phase 4: Type suffix if exists
+                            if (actualSuffix) {
+                                scheduleTimeout(() => {
+                                    typeText(
+                                        actualSuffix,
+                                        actualPrefix + pasteUrl,
+                                        () => {
+                                            animationComplete = true;
+                                        }
+                                    );
+                                }, 100);
+                            } else {
+                                animationComplete = true;
+                            }
+                        }, 600);
+                    }, 200);
+                });
             } else {
-                animateTyping(fullCommand);
+                typeText(fullCommand, '', () => {
+                    animationComplete = true;
+                });
             }
         }, actualDelay);
     }
 
-    onMount(() => {
-        // Cursor blink effect
-        cursorInterval = setInterval(() => {
-            if (!animationComplete) {
-                showCursor = !showCursor;
-            } else {
-                showCursor = true;
-            }
-        }, 530);
+    // React to visibility changes - only trigger on becoming visible
+    let wasVisible = false;
+    $effect(() => {
+        if (isVisible && !wasVisible) {
+            runAnimation();
+        }
+        wasVisible = isVisible;
+    });
 
-        // Use IntersectionObserver to detect when terminal becomes visible
+    // Cursor blink
+    $effect(() => {
+        const interval = setInterval(() => {
+            showCursor = !showCursor;
+        }, 530);
+        return () => clearInterval(interval);
+    });
+
+    onMount(() => {
         const observer = new IntersectionObserver(
             (entries) => {
                 entries.forEach((entry) => {
-                    const wasVisible = isCurrentlyVisible;
-                    isCurrentlyVisible =
+                    isVisible =
                         entry.isIntersecting && entry.intersectionRatio >= 0.5;
-
-                    // Run animation when becoming visible (transitioning from not visible to visible)
-                    if (isCurrentlyVisible && !wasVisible) {
-                        hasBeenVisible = true;
-                        runAnimation();
-                    }
                 });
             },
             { threshold: [0, 0.5, 1] }
@@ -135,79 +185,9 @@
 
         return () => {
             observer.disconnect();
-            clearAllTimeouts();
-            if (cursorInterval) clearInterval(cursorInterval);
+            clearTimeouts();
         };
     });
-
-    function animateTyping(text: string) {
-        let index = 0;
-        const typingSpeed = 50 + Math.random() * 30; // Slight randomness for realism
-
-        const typeNext = () => {
-            if (index < text.length) {
-                displayedText = text.slice(0, index + 1);
-                index++;
-                addTimeout(typeNext, typingSpeed + Math.random() * 20);
-            } else {
-                animationComplete = true;
-            }
-        };
-
-        typeNext();
-    }
-
-    function animatePasteUrl() {
-        // First, type the prefix
-        let prefixIndex = 0;
-        const prefixTypingSpeed = 50;
-
-        const typePrefix = () => {
-            if (prefixIndex < actualPrefix.length) {
-                displayedText = actualPrefix.slice(0, prefixIndex + 1);
-                prefixIndex++;
-                addTimeout(typePrefix, prefixTypingSpeed + Math.random() * 20);
-            } else {
-                // After prefix, show paste toast and paste the URL
-                addTimeout(() => {
-                    showPasteToast = true;
-                    addTimeout(() => {
-                        displayedText = actualPrefix + pasteUrl;
-                        showPasteToast = false;
-
-                        // Then type the suffix
-                        if (actualSuffix) {
-                            addTimeout(() => typeSuffix(), 100);
-                        } else {
-                            animationComplete = true;
-                        }
-                    }, 600);
-                }, 200);
-            }
-        };
-
-        const typeSuffix = () => {
-            let suffixIndex = 0;
-            const typeSuffixChar = () => {
-                if (suffixIndex < actualSuffix.length) {
-                    displayedText =
-                        actualPrefix +
-                        pasteUrl +
-                        actualSuffix.slice(0, suffixIndex + 1);
-                    suffixIndex++;
-                    addTimeout(
-                        typeSuffixChar,
-                        prefixTypingSpeed + Math.random() * 20
-                    );
-                } else {
-                    animationComplete = true;
-                }
-            };
-            typeSuffixChar();
-        };
-
-        typePrefix();
-    }
 </script>
 
 <div class="terminal" bind:this={terminalEl}>
@@ -222,7 +202,7 @@
     <div class="terminal-body">
         <div class="terminal-line">
             <span class="prompt">$</span>
-            <span class="command-text">{displayedText}</span>
+            <span class="command-text">{@html shownText}</span>
             {#if !animationComplete}
                 <span class="cursor" class:visible={showCursor}>▌</span>
             {/if}
@@ -245,6 +225,8 @@
         border: 1px solid #30363d;
         font-family: 'JetBrains Mono', monospace;
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        position: relative;
+        z-index: 10;
     }
 
     .terminal-header {
