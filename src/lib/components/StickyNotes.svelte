@@ -21,10 +21,14 @@
     }: Props = $props();
 
     const colors = [
-        { bg: 'rgba(255, 62, 0, 0.15)', border: 'rgba(255, 62, 0, 0.4)' },
-        { bg: 'rgba(100, 255, 218, 0.1)', border: 'rgba(100, 255, 218, 0.3)' },
-        { bg: 'rgba(247, 147, 26, 0.15)', border: 'rgba(247, 147, 26, 0.4)' },
-        { bg: 'rgba(139, 92, 246, 0.15)', border: 'rgba(139, 92, 246, 0.4)' },
+        { bg: 'rgba(255, 62, 0, 0.15)', border: 'rgba(255, 62, 0, 0.4)' }, // Svelte orange
+        { bg: 'rgba(100, 255, 218, 0.1)', border: 'rgba(100, 255, 218, 0.3)' }, // Teal/cyan
+        { bg: 'rgba(247, 147, 26, 0.15)', border: 'rgba(247, 147, 26, 0.4)' }, // Amber
+        { bg: 'rgba(139, 92, 246, 0.15)', border: 'rgba(139, 92, 246, 0.4)' }, // Purple
+        { bg: 'rgba(236, 72, 153, 0.15)', border: 'rgba(236, 72, 153, 0.4)' }, // Pink
+        { bg: 'rgba(34, 197, 94, 0.15)', border: 'rgba(34, 197, 94, 0.4)' }, // Green
+        { bg: 'rgba(59, 130, 246, 0.15)', border: 'rgba(59, 130, 246, 0.4)' }, // Blue
+        { bg: 'rgba(251, 191, 36, 0.15)', border: 'rgba(251, 191, 36, 0.4)' }, // Yellow
     ];
 
     let containerEl: HTMLDivElement;
