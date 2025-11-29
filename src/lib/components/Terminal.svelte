@@ -281,7 +281,7 @@
         position: absolute;
         left: 50%;
         transform: translateX(-50%);
-        font-size: 0.75rem;
+        font-size: 0.95rem;
         color: #8b949e;
         font-weight: 500;
     }

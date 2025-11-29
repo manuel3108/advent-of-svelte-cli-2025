@@ -20,7 +20,7 @@
             style="
 				background: {colors[i % colors.length].bg};
 				border-color: {colors[i % colors.length].border};
-				transform: rotate({(i - 1) * 3}deg);
+				transform: rotate({((i % 3) - 1) * 2.5}deg);
 				animation-delay: {i * 0.1}s;
 			"
         >

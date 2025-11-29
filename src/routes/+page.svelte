@@ -45,7 +45,9 @@
                         <span class="prefix">sv</span> create
                     </h2>
                     <Terminal command="npx sv create my-app" typing={true} />
-                    <StickyNotes flags={['--template', '--types', '--add']} />
+                    <StickyNotes
+                        flags={['--template', '--types', '--add', '--install']}
+                    />
                 </div>
             </Slide>
 
@@ -60,9 +62,17 @@
                     <StickyNotes
                         flags={[
                             'tailwindcss',
+                            'prettier',
+                            'eslint',
+                            'vitest',
                             'playwright',
-                            'storybook',
                             'lucia',
+                            'drizzle',
+                            'paraglide',
+                            'storybook',
+                            'mdsvex',
+                            'sveltekit-adapter',
+                            'mcp',
                         ]}
                         variant="packages"
                     />

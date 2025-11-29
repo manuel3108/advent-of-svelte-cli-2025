@@ -114,8 +114,8 @@
         <div class="code-section">
             <div class="line"><span class="tag">&lt;script&gt;</span></div>
             <div class="line">
-                <span class="keyword">let</span>&nbsp;<span class="variable"
-                    >count</span
+                &nbsp;&nbsp;<span class="keyword">let</span>&nbsp;<span
+                    class="variable">count</span
                 >&nbsp;<span class="operator">=</span>&nbsp;<span class="state"
                     >$state</span
                 ><span class="paren">(</span><span class="number">0</span><span
@@ -123,6 +123,7 @@
                 ><span class="punctuation">;</span>
             </div>
             <div class="line"><span class="tag">&lt;/script&gt;</span></div>
+            <div class="line">&nbsp;</div>
             <div class="line">
                 <span class="tag">&lt;button&gt;</span><span class="text"
                     >Clicks:&nbsp;</span
@@ -311,9 +312,9 @@
 
     .code-section {
         font-family: 'JetBrains Mono', monospace;
-        font-size: 0.7rem;
+        font-size: 0.95rem;
         line-height: 1.5;
-        padding: 0.6rem;
+        padding: 0.7rem;
         background: #0d1117;
         border: 1px solid #30363d;
         border-radius: 4px;
