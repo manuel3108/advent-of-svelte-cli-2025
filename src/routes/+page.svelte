@@ -206,7 +206,7 @@
                                         >sv create --from-playground</span
                                     >
                                     <span class="recap-desc"
-                                        >use playground</span
+                                        >use playground locally</span
                                     >
                                 </div>
                             </div>
