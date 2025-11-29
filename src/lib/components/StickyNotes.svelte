@@ -34,16 +34,16 @@
         display: flex;
         flex-wrap: wrap;
         justify-content: center;
-        gap: 0.75rem;
-        padding: 0.75rem;
+        gap: 1rem;
+        padding: 1rem;
     }
 
     .note {
-        padding: 0.6rem 1rem;
+        padding: 0.8rem 1.2rem;
         border-radius: 8px;
         border: 1px solid;
         font-family: 'JetBrains Mono', monospace;
-        font-size: 0.85rem;
+        font-size: 1rem;
         font-weight: 600;
         color: #e6edf3;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);

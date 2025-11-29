@@ -102,6 +102,9 @@
             <Slide class="slide">
                 <Snowfall density={20} />
                 <div class="content">
+                    <h2 class="command-title">
+                        <span class="prefix">npx</span> sv
+                    </h2>
                     <div class="recap-window">
                         <div class="recap-window-header">
                             <div class="window-buttons">
@@ -109,32 +112,36 @@
                                 <span class="btn minimize"></span>
                                 <span class="btn maximize"></span>
                             </div>
-                            <span class="window-title">sv commands</span>
+                            <span class="window-title">Quick Reference</span>
                         </div>
                         <div class="recap-window-body">
                             <div class="recap-commands">
                                 <div class="recap-item">
                                     <span class="recap-prefix">$</span>
                                     <span class="recap-cmd">sv create</span>
+                                    <span class="recap-desc">new project</span>
                                 </div>
                                 <div class="recap-item">
                                     <span class="recap-prefix">$</span>
                                     <span class="recap-cmd">sv add</span>
+                                    <span class="recap-desc">integrations</span>
                                 </div>
                                 <div class="recap-item">
                                     <span class="recap-prefix">$</span>
                                     <span class="recap-cmd">sv migrate</span>
+                                    <span class="recap-desc"
+                                        >upgrade Svelte</span
+                                    >
                                 </div>
                                 <div class="recap-item">
                                     <span class="recap-prefix">$</span>
                                     <span class="recap-cmd"
                                         >sv create --from-playground</span
                                     >
+                                    <span class="recap-desc"
+                                        >use playground</span
+                                    >
                                 </div>
-                            </div>
-                            <div class="recap-cta">
-                                <span class="cta-arrow">→</span>
-                                <code class="cta-command">npx sv</code>
                             </div>
                         </div>
                     </div>
@@ -181,7 +188,7 @@
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        padding: 3rem 1.5rem;
+        padding: 2rem 1.5rem 6rem 1.5rem;
         position: relative;
         overflow: hidden;
         background: linear-gradient(
@@ -200,7 +207,7 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 1.5rem;
+        gap: 1.25rem;
         text-align: center;
         width: 96%;
         padding: 0;
@@ -263,10 +270,11 @@
 
     /* Command Titles */
     .command-title {
-        font-size: 1.8rem;
+        font-size: 2.2rem;
         font-weight: 800;
         font-family: 'JetBrains Mono', 'Fira Code', monospace;
         color: #ccd6f6;
+        margin-bottom: 0.5rem;
     }
 
     .command-title .prefix {
@@ -346,8 +354,7 @@
     .recap-commands {
         display: flex;
         flex-direction: column;
-        gap: 0.6rem;
-        margin-bottom: 1rem;
+        gap: 0.75rem;
     }
 
     .recap-item {
@@ -357,37 +364,29 @@
         font-size: 1rem;
     }
 
+    .recap-item.highlight {
+        background: rgba(100, 255, 218, 0.1);
+        padding: 0.5rem 0.8rem;
+        margin: 0.3rem -0.8rem 0;
+        border-radius: 6px;
+        border-left: 3px solid #64ffda;
+    }
+
     .recap-prefix {
         color: #64ffda;
         font-weight: 600;
+        width: 1rem;
     }
 
     .recap-cmd {
         color: #e6edf3;
-    }
-
-    .recap-cta {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        padding-top: 1rem;
-        border-top: 1px solid #30363d;
-    }
-
-    .cta-arrow {
-        color: #64ffda;
-        font-size: 1.2rem;
-    }
-
-    .cta-command {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 1.1rem;
         font-weight: 600;
-        color: #64ffda;
-        background: rgba(100, 255, 218, 0.1);
-        padding: 0.5rem 1rem;
-        border-radius: 6px;
-        border: 1px solid rgba(100, 255, 218, 0.3);
+    }
+
+    .recap-desc {
+        color: #8b949e;
+        font-size: 0.85rem;
+        margin-left: auto;
     }
 
     /* Hide Animotion UI elements */

@@ -50,7 +50,7 @@
         overflow: hidden;
         border: 1px solid #30363d;
         font-family: 'JetBrains Mono', monospace;
-        font-size: 0.8rem;
+        font-size: 0.9rem;
         position: relative;
     }
 
@@ -58,13 +58,13 @@
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        padding: 0.6rem 0.9rem;
+        padding: 0.7rem 1rem;
         background: #161b22;
         border-bottom: 1px solid #30363d;
     }
 
     .folder-icon {
-        font-size: 1rem;
+        font-size: 1.1rem;
     }
 
     .folder-name {
@@ -73,15 +73,15 @@
     }
 
     .tree-content {
-        padding: 0.6rem;
+        padding: 0.8rem;
         padding-right: 6rem;
     }
 
     .tree-item {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
-        padding: 0.35rem 0.5rem;
+        gap: 0.6rem;
+        padding: 0.45rem 0.6rem;
         border-radius: 6px;
         transition: background 0.2s ease;
     }
