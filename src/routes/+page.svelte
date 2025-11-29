@@ -46,7 +46,6 @@
             <!-- Intro Slide (0:00–0:03) -->
             <Slide class="slide">
                 <Snowfall />
-                <div class="code-editor-bg intro-bg"></div>
                 <div class="content">
                     <svg
                         class="svelte-logo-large"
