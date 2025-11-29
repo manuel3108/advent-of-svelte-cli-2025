@@ -26,6 +26,18 @@
         suffix?: string;
         /** @deprecated Use `suffix` instead */
         commandSuffix?: string;
+        /** Wait for keypress before starting animation */
+        waitForKeypress?: boolean;
+        /** Delay before starting the typing animation (after visibility or keypress) */
+        startDelay?: number;
+        /** Key to reset state and prepare for new animation */
+        slideKey?: number;
+        /** Whether the terminal is ready to accept keypresses (for multi-phase animations) */
+        readyForKeypress?: boolean;
+        /** Callback when typing animation is triggered */
+        onAnimationStart?: () => void;
+        /** Callback when state is reset (e.g., when leaving view) */
+        onReset?: () => void;
     }
 
     let {
@@ -41,6 +53,12 @@
         commandPrefix,
         suffix = '',
         commandSuffix,
+        waitForKeypress = false,
+        startDelay = 0,
+        slideKey = 0,
+        readyForKeypress = true,
+        onAnimationStart,
+        onReset,
     }: Props = $props();
 
     // Handle deprecated props
@@ -65,6 +83,8 @@
     let showPasteToast = $state(false);
     let animationComplete = $state(false);
     let timeoutIds: number[] = [];
+    let keypressTriggered = $state(false);
+    let previousSlideKey = slideKey;
 
     function clearTimeouts() {
         timeoutIds.forEach((id) => clearTimeout(id));
@@ -111,6 +131,7 @@
             return;
         }
 
+        const totalDelay = actualDelay + startDelay;
         scheduleTimeout(() => {
             if (isPasteUrlMode) {
                 // Phase 1: Type prefix
@@ -149,7 +170,38 @@
                     animationComplete = true;
                 });
             }
-        }, actualDelay);
+        }, totalDelay);
+    }
+
+    // Reset state when slideKey changes
+    $effect(() => {
+        if (slideKey !== previousSlideKey) {
+            previousSlideKey = slideKey;
+            clearTimeouts();
+            displayedText = '';
+            showPasteToast = false;
+            animationComplete = false;
+            keypressTriggered = false;
+            hasAnimated = false;
+        }
+    });
+
+    // Handle keypress for triggering animation
+    function handleKeypress(event: KeyboardEvent) {
+        // Use Enter key as trigger (doesn't conflict with Reveal.js navigation)
+        if (
+            event.key === 'Enter' &&
+            !keypressTriggered &&
+            isVisible &&
+            waitForKeypress &&
+            readyForKeypress
+        ) {
+            event.preventDefault();
+            event.stopPropagation();
+            keypressTriggered = true;
+            onAnimationStart?.();
+            runAnimation();
+        }
     }
 
     // React to visibility changes - only trigger on becoming visible
@@ -159,11 +211,28 @@
     $effect(() => {
         if (isVisible && !wasVisible && initialized) {
             hasAnimated = true;
-            runAnimation();
+            if (!waitForKeypress) {
+                runAnimation();
+            } else {
+                // Add keypress listener when becoming visible
+                window.addEventListener('keydown', handleKeypress);
+            }
         }
-        // Only reset hasAnimated when fully leaving view
+        // Reset state when fully leaving view
         if (!isVisible && wasVisible) {
             hasAnimated = false;
+            keypressTriggered = false;
+            // Clear displayed text
+            clearTimeouts();
+            displayedText = '';
+            showPasteToast = false;
+            animationComplete = false;
+            // Remove keypress listener when leaving view
+            if (waitForKeypress) {
+                window.removeEventListener('keydown', handleKeypress);
+            }
+            // Notify parent that state was reset
+            onReset?.();
         }
         wasVisible = isVisible;
     });
@@ -200,6 +269,8 @@
         return () => {
             observer.disconnect();
             clearTimeouts();
+            // Clean up keypress listener if it was added
+            window.removeEventListener('keydown', handleKeypress);
         };
     });
 </script>

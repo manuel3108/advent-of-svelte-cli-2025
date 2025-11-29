@@ -5,6 +5,39 @@
     import StickyNotes from '$lib/components/StickyNotes.svelte';
     import FileTree from '$lib/components/FileTree.svelte';
     import PlaygroundScreenshot from '$lib/components/PlaygroundScreenshot.svelte';
+
+    // Track playground terminal ready state
+    let playgroundTerminalReady = $state(false);
+
+    // Track create slide sticky notes ready state
+    let createStickyNotesReady = $state(false);
+
+    // Track add slide sticky notes ready state
+    let addStickyNotesReady = $state(false);
+
+    function handleMouseAnimationComplete() {
+        playgroundTerminalReady = true;
+    }
+
+    function handlePlaygroundReset() {
+        playgroundTerminalReady = false;
+    }
+
+    function handleCreateTerminalStart() {
+        createStickyNotesReady = true;
+    }
+
+    function handleCreateReset() {
+        createStickyNotesReady = false;
+    }
+
+    function handleAddTerminalStart() {
+        addStickyNotesReady = true;
+    }
+
+    function handleAddReset() {
+        addStickyNotesReady = false;
+    }
 </script>
 
 <div class="presentation-container">
@@ -44,9 +77,17 @@
                     <h2 class="command-title">
                         <span class="prefix">sv</span> create
                     </h2>
-                    <Terminal command="npx sv create my-app" typing={true} />
+                    <Terminal
+                        command="npx sv create my-app"
+                        typing={true}
+                        waitForKeypress={true}
+                        onAnimationStart={handleCreateTerminalStart}
+                        onReset={handleCreateReset}
+                    />
                     <StickyNotes
                         flags={['--template', '--types', '--add', '--install']}
+                        waitForKeypress={true}
+                        readyForKeypress={createStickyNotesReady}
                     />
                 </div>
             </Slide>
@@ -58,7 +99,13 @@
                     <h2 class="command-title">
                         <span class="prefix">sv</span> add
                     </h2>
-                    <Terminal command="npx sv add tailwindcss" typing={true} />
+                    <Terminal
+                        command="npx sv add tailwindcss"
+                        typing={true}
+                        waitForKeypress={true}
+                        onAnimationStart={handleAddTerminalStart}
+                        onReset={handleAddReset}
+                    />
                     <StickyNotes
                         flags={[
                             'tailwindcss',
@@ -75,6 +122,8 @@
                             'mcp',
                         ]}
                         variant="packages"
+                        waitForKeypress={true}
+                        readyForKeypress={addStickyNotesReady}
                     />
                 </div>
             </Slide>
@@ -87,7 +136,11 @@
                         <span class="prefix">sv</span> migrate
                     </h2>
                     <FileTree />
-                    <Terminal command="npx sv migrate svelte-5" typing={true} />
+                    <Terminal
+                        command="npx sv migrate svelte-5"
+                        typing={true}
+                        waitForKeypress={true}
+                    />
                 </div>
             </Slide>
 
@@ -98,12 +151,16 @@
                     <h2 class="command-title">
                         <span class="prefix">--</span>from-playground
                     </h2>
-                    <PlaygroundScreenshot />
+                    <PlaygroundScreenshot
+                        onMouseAnimationComplete={handleMouseAnimationComplete}
+                        onReset={handlePlaygroundReset}
+                    />
                     <Terminal
                         pasteUrl="svelte.dev/playground/abc123def"
                         commandPrefix={'npx sv create --from-playground="'}
                         commandSuffix={'"'}
-                        pasteDelay={2200}
+                        waitForKeypress={true}
+                        readyForKeypress={playgroundTerminalReady}
                     />
                 </div>
             </Slide>

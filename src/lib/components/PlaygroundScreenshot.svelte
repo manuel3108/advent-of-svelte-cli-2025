@@ -1,15 +1,47 @@
 <script lang="ts">
     import { onMount } from 'svelte';
 
+    interface Props {
+        /** Key to reset state and prepare for new animation */
+        slideKey?: number;
+        /** Callback when mouse animation completes */
+        onMouseAnimationComplete?: () => void;
+        /** Callback when state is reset (e.g., when leaving view) */
+        onReset?: () => void;
+    }
+
+    let { slideKey = 0, onMouseAnimationComplete, onReset }: Props = $props();
+
     let containerEl: HTMLDivElement;
     let cursorX = $state(70);
     let cursorY = $state(70);
     let urlSelected = $state(false);
     let showCopiedToast = $state(false);
-    let cursorVisible = $state(true);
+    let cursorVisible = $state(false);
+    let isVisible = $state(false);
+    let keypressCount = $state(0);
+    let previousSlideKey = slideKey;
+
+    // Reset state when slideKey changes
+    $effect(() => {
+        if (slideKey !== previousSlideKey) {
+            previousSlideKey = slideKey;
+            resetState();
+        }
+    });
+
+    function resetState() {
+        cursorX = 70;
+        cursorY = 70;
+        urlSelected = false;
+        showCopiedToast = false;
+        cursorVisible = false;
+        keypressCount = 0;
+        onReset?.();
+    }
 
     function runAnimation() {
-        // Reset
+        // Reset cursor position but make it visible
         cursorX = 70;
         cursorY = 70;
         urlSelected = false;
@@ -37,27 +69,65 @@
             cursorVisible = false;
             showCopiedToast = false;
             urlSelected = false;
+            // Notify parent that mouse animation is complete
+            onMouseAnimationComplete?.();
         }, 2000);
     }
+
+    // Handle keypress for triggering animation
+    function handleKeypress(event: KeyboardEvent) {
+        // Use Enter key as trigger (doesn't conflict with Reveal.js navigation)
+        if (event.key === 'Enter' && isVisible) {
+            if (keypressCount === 0) {
+                event.preventDefault();
+                event.stopPropagation();
+                // First keypress: start mouse animation
+                keypressCount = 1;
+                runAnimation();
+            }
+        }
+    }
+
+    // React to visibility changes
+    let wasVisible = false;
+    let initialized = false;
+    $effect(() => {
+        if (isVisible && !wasVisible && initialized) {
+            // Add keypress listener when becoming visible
+            window.addEventListener('keydown', handleKeypress);
+        }
+        if (!isVisible && wasVisible) {
+            // Reset when leaving view
+            resetState();
+            // Remove keypress listener when leaving view
+            window.removeEventListener('keydown', handleKeypress);
+        }
+        wasVisible = isVisible;
+    });
 
     onMount(() => {
         const observer = new IntersectionObserver(
             (entries) => {
                 entries.forEach((entry) => {
-                    if (
-                        entry.isIntersecting &&
-                        entry.intersectionRatio >= 0.5
-                    ) {
-                        runAnimation();
-                    }
+                    isVisible =
+                        entry.isIntersecting && entry.intersectionRatio >= 0.5;
                 });
             },
             { threshold: [0, 0.5, 1] }
         );
 
-        observer.observe(containerEl);
+        requestAnimationFrame(() => {
+            observer.observe(containerEl);
+            requestAnimationFrame(() => {
+                initialized = true;
+            });
+        });
 
-        return () => observer.disconnect();
+        return () => {
+            observer.disconnect();
+            // Clean up keypress listener if it was added
+            window.removeEventListener('keydown', handleKeypress);
+        };
     });
 </script>
 

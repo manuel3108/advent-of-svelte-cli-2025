@@ -1,8 +1,24 @@
 <script lang="ts">
-    let { flags, variant = 'flags' } = $props<{
+    import { onMount } from 'svelte';
+
+    interface Props {
         flags: string[];
         variant?: 'flags' | 'packages';
-    }>();
+        /** Wait for keypress before showing notes */
+        waitForKeypress?: boolean;
+        /** Key to reset state and prepare for new animation */
+        slideKey?: number;
+        /** Whether the component is ready to accept keypresses (for multi-phase animations) */
+        readyForKeypress?: boolean;
+    }
+
+    let {
+        flags,
+        variant = 'flags',
+        waitForKeypress = false,
+        slideKey = 0,
+        readyForKeypress = true,
+    }: Props = $props();
 
     const colors = [
         { bg: 'rgba(255, 62, 0, 0.15)', border: 'rgba(255, 62, 0, 0.4)' },
@@ -10,19 +26,98 @@
         { bg: 'rgba(247, 147, 26, 0.15)', border: 'rgba(247, 147, 26, 0.4)' },
         { bg: 'rgba(139, 92, 246, 0.15)', border: 'rgba(139, 92, 246, 0.4)' },
     ];
+
+    let containerEl: HTMLDivElement;
+    let isVisible = $state(false);
+    let showNotes = $state(false);
+    let previousSlideKey = slideKey;
+    let keypressTriggered = $state(false);
+
+    // Reset state when slideKey changes
+    $effect(() => {
+        if (slideKey !== previousSlideKey) {
+            previousSlideKey = slideKey;
+            showNotes = false;
+            keypressTriggered = false;
+        }
+    });
+
+    // Handle keypress for triggering notes
+    function handleKeypress(event: KeyboardEvent) {
+        if (
+            event.key === 'Enter' &&
+            !keypressTriggered &&
+            isVisible &&
+            waitForKeypress &&
+            readyForKeypress
+        ) {
+            event.preventDefault();
+            event.stopPropagation();
+            keypressTriggered = true;
+            showNotes = true;
+        }
+    }
+
+    // React to visibility changes
+    let wasVisible = false;
+    let initialized = false;
+    $effect(() => {
+        if (isVisible && !wasVisible && initialized) {
+            if (!waitForKeypress) {
+                showNotes = true;
+            } else {
+                // Add keypress listener when becoming visible
+                window.addEventListener('keydown', handleKeypress);
+            }
+        }
+        if (!isVisible && wasVisible) {
+            showNotes = false;
+            keypressTriggered = false;
+            // Remove keypress listener when leaving view
+            if (waitForKeypress) {
+                window.removeEventListener('keydown', handleKeypress);
+            }
+        }
+        wasVisible = isVisible;
+    });
+
+    onMount(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    isVisible =
+                        entry.isIntersecting && entry.intersectionRatio >= 0.5;
+                });
+            },
+            { threshold: [0, 0.5, 1] }
+        );
+
+        requestAnimationFrame(() => {
+            observer.observe(containerEl);
+            requestAnimationFrame(() => {
+                initialized = true;
+            });
+        });
+
+        return () => {
+            observer.disconnect();
+            // Clean up keypress listener if it was added
+            window.removeEventListener('keydown', handleKeypress);
+        };
+    });
 </script>
 
-<div class="sticky-notes">
+<div class="sticky-notes" bind:this={containerEl} class:hidden={!showNotes}>
     {#each flags as flag, i}
         <div
             class="note"
             class:package={variant === 'packages'}
             style="
-				background: {colors[i % colors.length].bg};
-				border-color: {colors[i % colors.length].border};
-				transform: rotate({((i % 3) - 1) * 2.5}deg);
-				animation-delay: {i * 0.1}s;
-			"
+                background: {colors[i % colors.length].bg};
+                border-color: {colors[i % colors.length].border};
+                transform: rotate({((i % 3) - 1) * 2.5}deg);
+                animation-delay: {i * 0.1}s;
+            "
         >
             <span class="flag-text">{flag}</span>
         </div>
@@ -36,6 +131,14 @@
         justify-content: center;
         gap: 1rem;
         padding: 1rem;
+    }
+
+    .sticky-notes.hidden {
+        visibility: hidden;
+    }
+
+    .sticky-notes.hidden .note {
+        animation: none;
     }
 
     .note {
