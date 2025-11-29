@@ -58,4 +58,4 @@ Just copy the playground URL and run `sv create --from-playground`. Paste the li
 
 # Outro
 
-And that’s the Svelte CLI in a nutshell. Try it out with npx sv — and see you in the cli!s
+And that’s the Svelte CLI in a nutshell. Try it out with npx sv
