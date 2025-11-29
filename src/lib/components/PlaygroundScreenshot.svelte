@@ -144,10 +144,21 @@
 
     <!-- Animated Cursor -->
     {#if cursorVisible}
-        <div
+        <svg
             class="cursor-pointer"
             style="left: {cursorX}%; top: {cursorY}%;"
-        ></div>
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+        >
+            <path
+                d="M5.5 3.21V20.8c0 .45.54.67.85.35l4.86-4.86a.5.5 0 0 1 .35-.15h6.87c.48 0 .72-.58.38-.92L6.35 2.85a.5.5 0 0 0-.85.36Z"
+                fill="#fff"
+                stroke="#000"
+                stroke-width="1.5"
+            />
+        </svg>
     {/if}
 </div>
 
@@ -383,22 +394,9 @@
 
     .cursor-pointer {
         position: absolute;
-        width: 20px;
-        height: 20px;
         pointer-events: none;
         z-index: 200;
         transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-        transform: translate(-50%, -50%);
-    }
-
-    .cursor-pointer::before {
-        content: '';
-        position: absolute;
-        width: 0;
-        height: 0;
-        border-left: 8px solid white;
-        border-top: 5px solid transparent;
-        border-bottom: 12px solid transparent;
         filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
     }
 </style>

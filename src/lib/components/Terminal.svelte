@@ -90,7 +90,7 @@
                 displayedText = formatForDisplay(
                     baseText + text.slice(0, index)
                 );
-                scheduleTimeout(typeNext, 50 + Math.random() * 30);
+                scheduleTimeout(typeNext, 70 + Math.random() * 40);
             } else {
                 onComplete();
             }
@@ -217,10 +217,10 @@
         <div class="terminal-line">
             <span class="prompt">$</span>
             <span class="command-text"
-                >{@html displayedText}{#if !animationComplete}<span
-                        class="cursor"
-                        class:visible={showCursor}>▌</span
-                    >{/if}</span
+                >{@html displayedText}<span
+                    class="cursor"
+                    class:visible={showCursor && !animationComplete}>▌</span
+                ></span
             >
         </div>
         {#if showPasteToast}
