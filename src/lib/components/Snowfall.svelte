@@ -19,7 +19,7 @@
         snowflakes = Array.from({ length: density }, (_, i) => ({
             id: i,
             x: Math.random() * 100,
-            y: Math.random() * 100,
+            y: 0, // All snowflakes start at top, animation handles vertical position
             size: Math.random() * 10 + 6,
             speed: Math.random() * 4 + 6,
             opacity: Math.random() * 0.7 + 0.3,
@@ -64,7 +64,7 @@
 
     @keyframes fall {
         0% {
-            transform: translateY(-10px) translateX(0) rotate(0deg);
+            transform: translateY(-20px) translateX(0) rotate(0deg);
         }
         25% {
             transform: translateY(25vh) translateX(10px) rotate(90deg);

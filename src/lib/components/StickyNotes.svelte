@@ -42,6 +42,17 @@
         }
     });
 
+    // Track readyForKeypress from previous frame to avoid race conditions
+    let wasReadyLastFrame = $state(false);
+
+    $effect(() => {
+        // Update wasReadyLastFrame after a microtask to capture "previous" state
+        const currentReady = readyForKeypress;
+        requestAnimationFrame(() => {
+            wasReadyLastFrame = currentReady;
+        });
+    });
+
     // Handle keypress for triggering notes
     function handleKeypress(event: KeyboardEvent) {
         // Use Numpad 0 as trigger (doesn't conflict with Reveal.js navigation)
@@ -50,20 +61,13 @@
             event.location === 3 &&
             !keypressTriggered &&
             isVisible &&
-            waitForKeypress
+            waitForKeypress &&
+            wasReadyLastFrame // Use the value from before this keypress could trigger any changes
         ) {
-            // Capture readyForKeypress value at the start of event handling
-            // to avoid race condition with Terminal's onAnimationStart callback
-            const wasReady = readyForKeypress;
-
-            // Use setTimeout to defer checking, allowing the event to finish
-            // processing in other components first
-            setTimeout(() => {
-                if (wasReady && !keypressTriggered) {
-                    keypressTriggered = true;
-                    showNotes = true;
-                }
-            }, 0);
+            event.preventDefault();
+            event.stopPropagation();
+            keypressTriggered = true;
+            showNotes = true;
         }
     }
 
