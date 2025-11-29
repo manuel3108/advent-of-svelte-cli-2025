@@ -30,18 +30,18 @@ That's the Svelte CLI. Give it a try using `npx sv` - and see you in the cli!
 
 # Intro
 
-Hey everyone! Welcome to Advent of Svelte 2025. Today we’re taking a look at the Svelte CLI — a lightweight tool that makes working with SvelteKit projects a whole lot smoother.
+Hey everyone! Welcome back to Advent of Svelte. Today we’re taking a look at the Svelte CLI.
 
 # sv create
 
-We’ll start with the command you’ll use most often: `sv create`.
-Run it with a project name and it walks you through a quick setup to generate a new SvelteKit project. It’s fast, simple, and gets you straight to writing code.
+We’ll start with a command you’ll use pretty often: `sv create`.
+Run it with a project name and it walks you through a quick setup to generate a new SvelteKit project.
 
 If you already know what you want, you can skip the prompts. Use flags like `--template`, `--types`, or `--add` to preconfigure things automatically.
 
 # sv add
 
-Then there’s `sv add`. This is how you bring new functionality into an existing project. Need Tailwind, Drizzle, Vitest or an MCP server? Just add them with a single command.
+Then there’s `sv add`. This is how you bring new functionality into an existing project. Need Tailwind, Drizzle, Vitest or an MCP server? Just add them with one single command.
 
 # sv migrate
 
@@ -51,10 +51,10 @@ If you’re still on Svelte 4 or earlier, `sv migrate svelte-5` is your friend. 
 
 Everything so far has been part of the CLI for a bit, but this next feature is quite new — and it’s going to helpful throughout this year’s Advent of Svelte.
 
-If you’ve ever built something in the playground and wanted to continue locally, you probably know the drill: download the ZIP, unpack it, install dependencies, clean up the structure… not exactly fun.
+If you’ve ever built something in the playground and wanted to continue locally, you probably know the drill: download the ZIP file, unpack it, install dependencies, and make sure you didn't break anything while doing so.
 
 Now?
-Just copy the playground URL and run sv create --from-playground. Paste the link, press enter, and the CLI generates a complete SvelteKit project from your playground. All the files are there, dependencies are installed, and it even asks whether you want to add extras like Tailwind or Drizzle. One command and you’re ready to keep building.
+Just copy the playground URL and run `sv create --from-playground`. Paste the link, press enter, and the CLI generates a complete SvelteKit project from your playground. All the files are there, dependencies are installed, and it even asks whether you want to add extras like Tailwind or Drizzle.
 
 # Outro
 
