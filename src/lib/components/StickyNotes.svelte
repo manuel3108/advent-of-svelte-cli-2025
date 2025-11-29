@@ -44,17 +44,26 @@
 
     // Handle keypress for triggering notes
     function handleKeypress(event: KeyboardEvent) {
+        // Use Numpad 0 as trigger (doesn't conflict with Reveal.js navigation)
         if (
-            event.key === 'Enter' &&
+            event.key === '0' &&
+            event.location === 3 &&
             !keypressTriggered &&
             isVisible &&
-            waitForKeypress &&
-            readyForKeypress
+            waitForKeypress
         ) {
-            event.preventDefault();
-            event.stopPropagation();
-            keypressTriggered = true;
-            showNotes = true;
+            // Capture readyForKeypress value at the start of event handling
+            // to avoid race condition with Terminal's onAnimationStart callback
+            const wasReady = readyForKeypress;
+
+            // Use setTimeout to defer checking, allowing the event to finish
+            // processing in other components first
+            setTimeout(() => {
+                if (wasReady && !keypressTriggered) {
+                    keypressTriggered = true;
+                    showNotes = true;
+                }
+            }, 0);
         }
     }
 

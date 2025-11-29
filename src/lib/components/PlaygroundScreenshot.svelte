@@ -76,8 +76,8 @@
 
     // Handle keypress for triggering animation
     function handleKeypress(event: KeyboardEvent) {
-        // Use Enter key as trigger (doesn't conflict with Reveal.js navigation)
-        if (event.key === 'Enter' && isVisible) {
+        // Use Numpad 0 as trigger (doesn't conflict with Reveal.js navigation)
+        if (event.key === '0' && event.location === 3 && isVisible) {
             if (keypressCount === 0) {
                 event.preventDefault();
                 event.stopPropagation();
