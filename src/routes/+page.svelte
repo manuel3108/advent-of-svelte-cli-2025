@@ -4,7 +4,6 @@
     import Terminal from '$lib/components/Terminal.svelte';
     import StickyNotes from '$lib/components/StickyNotes.svelte';
     import FileTree from '$lib/components/FileTree.svelte';
-    import Calendar from '$lib/components/Calendar.svelte';
     import PlaygroundScreenshot from '$lib/components/PlaygroundScreenshot.svelte';
 </script>
 
@@ -35,7 +34,6 @@
                         <span class="day">Day 2</span>
                         <span class="main-title">Svelte CLI in 2025</span>
                     </h1>
-                    <p class="subtitle">Welcome back to the Advent of Svelte</p>
                 </div>
             </Slide>
 
@@ -93,8 +91,8 @@
                     <PlaygroundScreenshot />
                     <Terminal
                         pasteUrl="svelte.dev/playground/abc123def"
-                        commandPrefix='npx sv create --from-playground="'
-                        commandSuffix='"'
+                        commandPrefix={'npx sv create --from-playground="'}
+                        commandSuffix={'"'}
                         pasteDelay={2200}
                     />
                 </div>
@@ -104,8 +102,42 @@
             <Slide class="slide">
                 <Snowfall density={20} />
                 <div class="content">
-                    <Calendar />
-                    <h2 class="outro-title">See you tomorrow!</h2>
+                    <div class="recap-window">
+                        <div class="recap-window-header">
+                            <div class="window-buttons">
+                                <span class="btn close"></span>
+                                <span class="btn minimize"></span>
+                                <span class="btn maximize"></span>
+                            </div>
+                            <span class="window-title">sv commands</span>
+                        </div>
+                        <div class="recap-window-body">
+                            <div class="recap-commands">
+                                <div class="recap-item">
+                                    <span class="recap-prefix">$</span>
+                                    <span class="recap-cmd">sv create</span>
+                                </div>
+                                <div class="recap-item">
+                                    <span class="recap-prefix">$</span>
+                                    <span class="recap-cmd">sv add</span>
+                                </div>
+                                <div class="recap-item">
+                                    <span class="recap-prefix">$</span>
+                                    <span class="recap-cmd">sv migrate</span>
+                                </div>
+                                <div class="recap-item">
+                                    <span class="recap-prefix">$</span>
+                                    <span class="recap-cmd"
+                                        >sv create --from-playground</span
+                                    >
+                                </div>
+                            </div>
+                            <div class="recap-cta">
+                                <span class="cta-arrow">→</span>
+                                <code class="cta-command">npx sv</code>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </Slide>
         </Presentation>
@@ -253,6 +285,109 @@
         font-size: 1rem;
         color: #64ffda;
         margin-top: 0.5rem;
+    }
+
+    /* Recap Window */
+    .recap-window {
+        width: 100%;
+        background: #0d1117;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid #30363d;
+        font-family: 'JetBrains Mono', monospace;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+
+    .recap-window-header {
+        display: flex;
+        align-items: center;
+        padding: 0.6rem 0.9rem;
+        background: #161b22;
+        border-bottom: 1px solid #30363d;
+        position: relative;
+    }
+
+    .window-buttons {
+        display: flex;
+        gap: 0.4rem;
+    }
+
+    .recap-window-header .btn {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+    }
+
+    .recap-window-header .btn.close {
+        background: #ff5f56;
+    }
+
+    .recap-window-header .btn.minimize {
+        background: #ffbd2e;
+    }
+
+    .recap-window-header .btn.maximize {
+        background: #27ca40;
+    }
+
+    .window-title {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 0.75rem;
+        color: #8b949e;
+        font-weight: 500;
+    }
+
+    .recap-window-body {
+        padding: 1.2rem;
+    }
+
+    .recap-commands {
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+        margin-bottom: 1rem;
+    }
+
+    .recap-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1rem;
+    }
+
+    .recap-prefix {
+        color: #64ffda;
+        font-weight: 600;
+    }
+
+    .recap-cmd {
+        color: #e6edf3;
+    }
+
+    .recap-cta {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding-top: 1rem;
+        border-top: 1px solid #30363d;
+    }
+
+    .cta-arrow {
+        color: #64ffda;
+        font-size: 1.2rem;
+    }
+
+    .cta-command {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #64ffda;
+        background: rgba(100, 255, 218, 0.1);
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        border: 1px solid rgba(100, 255, 218, 0.3);
     }
 
     /* Hide Animotion UI elements */

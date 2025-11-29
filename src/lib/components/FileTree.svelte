@@ -15,24 +15,30 @@
             <span class="icon">📁</span>
             <span class="name">routes</span>
         </div>
-        <div class="tree-item indent-2">
+        <div class="tree-item indent-2 has-badge">
             <span class="icon file">📄</span>
             <span class="name">+page.svelte</span>
-            <span class="badge migrate">migrate</span>
         </div>
         <div class="tree-item indent-1">
             <span class="icon file">📄</span>
             <span class="name">app.html</span>
         </div>
-        <div class="tree-item">
+        <div class="tree-item has-badge">
             <span class="icon file">📄</span>
             <span class="name">svelte.config.js</span>
-            <span class="badge migrate">migrate</span>
         </div>
         <div class="tree-item">
             <span class="icon file">📄</span>
             <span class="name">package.json</span>
         </div>
+    </div>
+    <div class="badges-column">
+        <div class="badge-row"></div>
+        <div class="badge-row"></div>
+        <div class="badge-row"><span class="badge migrate">migrate</span></div>
+        <div class="badge-row"></div>
+        <div class="badge-row"><span class="badge migrate">migrate</span></div>
+        <div class="badge-row"></div>
     </div>
 </div>
 
@@ -45,6 +51,7 @@
         border: 1px solid #30363d;
         font-family: 'JetBrains Mono', monospace;
         font-size: 0.8rem;
+        position: relative;
     }
 
     .tree-header {
@@ -67,6 +74,7 @@
 
     .tree-content {
         padding: 0.6rem;
+        padding-right: 6rem;
     }
 
     .tree-item {
@@ -93,6 +101,7 @@
     .icon {
         font-size: 0.9rem;
         opacity: 0.8;
+        flex-shrink: 0;
     }
 
     .icon.file {
@@ -101,20 +110,37 @@
 
     .name {
         color: #8b949e;
+        text-align: left;
+    }
+
+    .badges-column {
+        position: absolute;
+        top: 0;
+        right: 0.6rem;
+        bottom: 0;
+        display: flex;
+        flex-direction: column;
+        padding-top: calc(0.6rem + 0.9rem + 1rem + 1px);
+    }
+
+    .badge-row {
+        height: calc(0.35rem * 2 + 1.2rem);
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
     }
 
     .badge {
-        margin-left: auto;
-        padding: 0.15rem 0.4rem;
-        border-radius: 10px;
-        font-size: 0.6rem;
-        font-weight: 600;
+        padding: 0.25rem 0.6rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 700;
         text-transform: uppercase;
+        text-align: center;
     }
 
     .badge.migrate {
-        background: rgba(255, 62, 0, 0.2);
-        color: #ff3e00;
-        border: 1px solid rgba(255, 62, 0, 0.3);
+        background: #ff3e00;
+        color: white;
     }
 </style>
